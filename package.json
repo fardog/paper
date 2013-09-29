@@ -1,0 +1,23 @@
+{
+  "name": "paper",
+  "version": "0.0.1",
+  "private": true,
+  "author": "Nathan Wittstock <code@fardogllc.com>",
+  "description": "Watch everything.",
+  "scripts": {
+    "start": "coffee app.coffee"
+  },
+  "dependencies": {
+    "coffee-script": "1.6.x",
+		"nconf": "0.6.x",
+		"aws-sdk": "1.6.x",
+		"noble": "*",
+		"sensortag": "*",
+		"caf_piface": "*",
+		"faye": "*"
+  },
+  "devDependencies": {
+		"grunt": "*",
+		"nesh": "1.3.x"
+  }
+}

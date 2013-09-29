@@ -1,0 +1,136 @@
+{
+	"sensors": {
+		"door1": {
+			"friendlyName": "Front Door",
+			"name": "door1",
+			"spec": "sensors/pif_switch",
+			"genericType": "switch",
+			"switch": {
+				"positions": 2,
+				"messages": ["Front Door closed.", "Front Door opened."],
+				"status": ["close", "open"]
+			},
+			"notification": {
+				"armed": 9,
+				"disarmed": 1
+			},
+			"options": {
+				"input": 0
+			},
+			"channel": "/sensors/doors/0"
+		},
+		"door2": {
+			"friendlyName": "Back Door",
+			"name": "door2",
+			"spec": "sensors/pif_switch",
+			"genericType": "switch",
+			"switch": {
+				"positions": 2,
+				"messages": ["Back Door closed.", "Back Door opened."],
+				"status": ["close", "open"]
+			},
+			"notification": {
+				"armed": 9,
+				"disarmed": 1
+			},
+			"options": {
+				"input": 1
+			},
+			"channel": "/sensors/doors/1"
+		}
+	},
+	"notifiers": {
+		"console": {
+			"friendlyName": "Console",
+			"name": "console",
+			"spec": "notifiers/console",
+			"notification": {
+				"armed": 0,
+				"disarmed": 1
+			},
+			"listen": "all",
+			"channel": "/notifiers/console"
+		},
+		"logger": {
+			"friendlyName": "Logger",
+			"name": "logger",
+			"spec": "notifiers/logger",
+			"notification": {
+				"armed": 0,
+				"disarmed": 1
+			},
+			"listen": "all",
+			"channel": "/notifiers/logger"
+		},
+		"twilio": {
+			"friendlyName": "Twilio Text Message",
+			"name": "twilio",
+			"spec": "/notifiers/twilio",
+			"notification": {
+				"armed": 5,
+				"disarmed": 10
+			},
+			"listen": "all",
+			"options": {
+				"accountSid": "",
+				"authToken": "",
+				"number": "",
+				"recipients": ["", ""]
+			},
+			"channel": "/notifiers/twilio"
+		}
+	},
+	"controllers": {
+		"twilio-sqs": {
+			"friendlyName": "Twilio Text Messages via Amazon SQS",
+			"name": "twilio-sqs",
+			"spec": "controllers/twilio-sqs",
+			"options": {
+				"aws_apiVersion": "2013-09-25",
+				"aws_accessKeyId": "",
+				"aws_secretAccessKey": "",
+				"aws_endpoint": "",
+				"aws_region": "us-west-2",
+				"twilio_accountSid": "",
+				"twilio_authToken": "",
+				"number": "",
+				"to": [""],
+				"authorizedSenders": ["", ""]
+			}
+		}
+	},
+	"global": {
+		"system": {
+			"name": "paper",
+			"address": "",
+			"country": "US",
+			"phoneNumber": "",
+			"locale": {
+				"language": "en_us",
+				"timeZone": "America/Los_Angeles"
+			},
+			"network": {
+				"dnsName": "",
+				"ipAddress": ""
+			}
+		},
+		"contact": {
+			"name": "",
+			"phoneNumber": "",
+			"email": ""
+		},
+		"communication": {
+			"server": true,
+			"adapter": "coms/bayeux",
+			"bayeux": {
+				"port": 8000,
+				"mount": "/",
+				"timeout": 45
+			},
+			"controlChannel": "/control/global"
+		},
+		"status": {
+			"adapter": "status/status"
+		}
+	}
+}
