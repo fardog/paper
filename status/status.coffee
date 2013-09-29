@@ -23,8 +23,9 @@ module.exports =
   class Status
     collect_status: (message) =>
       status = {}
+      status["armed"] = if @com.get_status() then "yes" else "no"
       for sensor in @sensors
-        status[sensor.config.name] = sensor.getStatus()
+        status[sensor.config.name] = sensor.get_status()
 
       message =
         app: "paper"

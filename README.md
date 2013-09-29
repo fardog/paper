@@ -3,7 +3,7 @@ paper
 
 ![Image of Paper, the dog](https://raw.github.com/fardog/paper/master/docs/assets/images/paper.jpg "Paper, a dog.")
 
-Paper is a home security/monitoring system, written modularly and able to 
+*paper* is a home security/monitoring system, written modularly and able to 
 support a variety of sensor types, notification systems, and controllers. That 
 is the goal, at least; right now it's very basic, and shouldn't be considered 
 anything more than a technology demo.
@@ -20,7 +20,7 @@ Raspbian and Node.js v0.10.x, using a PiFace Digital for its sensors.
 Architecture
 ------------
 
-Paper is designed to work around a pubsub backend—currently, 
+*paper* is designed to work around a pubsub backend—currently, 
 [Faye](https://npmjs.org/package/faye)—for communication with external systems 
 and as an internal messaging system; however individual modules aren't aware of 
 the pubsub communications, they are evented. The goal here is to create 
@@ -54,7 +54,7 @@ convenient global place to handle these special cases.
 Messaging API
 -------------
 
-*paper* uses passes messages from each of it's modules using a well-defined JSON
+*paper* passes messages from each of it's modules using a well-defined JSON
 object, in the following format:
 
 ```

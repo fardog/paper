@@ -25,7 +25,75 @@ events = require 'events'
 
 module.exports =
   class Bayeux extends events.EventEmitter
-    # The coms module handles critical messages
+    # Bayeux is the standard communication module, which uses `faye` as its 
+    # pubsub backend.
+    #
+    # config - The configuration object
+    constructor: (@config) ->
+      if !@config.bayeux
+        console.log 'Bayeux: no configuration information was present.'
+        process.exit(1)
+
+      bayeux_config = {}
+      bayeux_config.mount = config.bayeux.mount || '/'
+      bayeux_config.port = config.bayeux.port || 8000
+      bayeux_config.timeout = config.bayeux.timeout || 45
+
+      @bayeux = new faye.NodeAdapter(@config)
+      @bayeux.listen(@port)
+      @bayeux.bind 'publish', @message_received
+      if process.env.DEBUG then console.log 'Bayeux: running'
+
+      # The coms object provides the global armed/disarmed switch
+      @armed = false
+
+
+    # Public: Sends a message to the pubsub process.
+    #
+    # channel - A string representing the channel data should be sent to.
+    # data - An object containing the data to be sent
+    #
+    # Returns nothing
+    send_message: (channel, data) =>
+      @bayeux.getClient().publish channel, data
+      if process.env.DEBUG then console.log 'Bayeux: message published'
+
+
+    # Public: Gets the Armed/Disarmed status.
+    #
+    # Returns a boolean representing "armed" status.
+    get_status: =>
+      return @armed
+
+    
+    # Private: Called by the pubsub process whenever a message is received. 
+    # Responsible for emitting the events that all other local modules will 
+    # act upon.
+    #
+    # clientId - The identifier of the sending client. For possible future use.
+    # channel - A string representing the channel the message came from.
+    # data - An object containing the message data.
+    #
+    # Returns nothing
+    # Emits the 'message_received' event whenver the pubsub process receives a 
+    # message.
+    message_received: (clientId, channel, data) =>
+      data.channel = channel
+      @emit 'message_received', data
+      
+      # see if we got an arm/disarm message
+      if data.data.command? and data.data.command in ['arm', 'disarm', 'shutdown']
+        @processCriticalMessage(data)
+
+      if process.env.DEBUG then console.log 'Bayeux: message received'
+
+
+    # Private: The coms module handles critical incoming messages. This will be 
+    # called whenever a message is received who's command is a magic value.
+    #
+    # message - The received message
+    #
+    # Returns nothing
     processCriticalMessage: (message) =>
       if message.data.command == 'shutdown'
         console.log "Bayeux: shutdown requested"
@@ -49,41 +117,4 @@ module.exports =
           status: status
           message: "System is " + status
       @send_message '/control/global', message_to_publish
-
-
-    message_received: (clientId, channel, data) =>
-      data.channel = channel
-      @emit 'message_received', data
-      
-      # see if we got an arm/disarm message
-      if data.data.command? and data.data.command in ['arm', 'disarm', 'shutdown']
-        @processCriticalMessage(data)
-
-      if process.env.DEBUG then console.log 'Bayeux: message received'
-
-    constructor: (@config) ->
-      if !@config.bayeux
-        console.log 'Bayeux: no configuration information was present.'
-        process.exit(1)
-
-      bayeux_config = {}
-      bayeux_config.mount = config.bayeux.mount || '/'
-      bayeux_config.port = config.bayeux.port || 8000
-      bayeux_config.timeout = config.bayeux.timeout || 45
-
-      @bayeux = new faye.NodeAdapter(@config)
-      @bayeux.listen(@port)
-      @bayeux.bind 'publish', @message_received
-      if process.env.DEBUG then console.log 'Bayeux: running'
-
-      # The coms object provides the global armed/disarmed switch
-      @armed = false
-
-    send_message: (channel, data) =>
-      @bayeux.getClient().publish channel, data
-      if process.env.DEBUG then console.log 'Bayeux: message published'
-
-    publish_test_message: =>
-      @bayeux.getClient().publish '/test', data =
-        message: "This is a test message."
 

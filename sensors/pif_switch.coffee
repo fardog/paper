@@ -52,7 +52,7 @@ module.exports =
     read: =>
       @status = @p.read(@config.pin)
 
-    getStatus: =>
+    get_status: =>
       @config.switch.status[@status]
 
     constructor: (config, @com) ->

@@ -20,6 +20,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ###
 
 
+# This is the initializer for *paper*. It runs through your config.json file 
+# and loads each of the controllers, sensors, and etc. The load is performed in 
+# the order you've defined them in each of the categories.
+
+
 # Read configuration
 config = require 'nconf'
 config.argv().env().file('./config.json')
@@ -53,15 +58,15 @@ status = new stat (config.get 'global:status'), com, sensors
 
 
 # Start a REPL if we're in debug
-if process.env.DEBUG
-  nesh = require 'nesh'
-  opts =
-    welcome: 'paper debug mode.',
-    prompt: 'paper> '
-
-  nesh.config.load()
-  nesh.loadLanguage 'coffee'
-  nesh.start opts, (err) ->
-    if (err)
-      nesh.log.error(err)
+# if process.env.DEBUG
+#   nesh = require 'nesh'
+#   opts =
+#     welcome: 'paper debug mode.',
+#     prompt: 'paper> '
+# 
+#   nesh.config.load()
+#   nesh.loadLanguage 'coffee'
+#   nesh.start opts, (err) ->
+#     if (err)
+#       nesh.log.error(err)
 
