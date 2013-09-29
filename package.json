@@ -8,7 +8,7 @@
     "start": "coffee app.coffee"
   },
   "dependencies": {
-    "coffee-script": "1.6.x",
+		"coffee-script": "1.6.x",
 		"nconf": "0.6.x",
 		"aws-sdk": "1.6.x",
 		"noble": "*",
