@@ -28,7 +28,7 @@ module.exports =
       command = command.replace ']', ''
       parts = command.split '['
       command = parts[0].trim().toLowerCase()
-      from = parts[1].trim()
+      from = parts[parts.length-1].trim()
 
       if from in @config.options.authorizedSenders
         if process.env.DEBUG then console.log "TwilioSQS: Valid command."
