@@ -20,6 +20,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ###
 
 
+http = require 'http'
 faye = require 'faye'
 events = require 'events'
 
@@ -39,8 +40,10 @@ module.exports =
       bayeux_config.port = config.bayeux.port || 8000
       bayeux_config.timeout = config.bayeux.timeout || 45
 
+      @server = http.createServer()
       @bayeux = new faye.NodeAdapter(@config)
-      @bayeux.listen(@port)
+      @bayeux.attach(@server)
+      @server.listen(@port)
       @bayeux.bind 'publish', @message_received
       if process.env.DEBUG then console.log 'Bayeux: running'
 

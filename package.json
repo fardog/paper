@@ -1,6 +1,6 @@
 {
   "name": "paper",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "author": "Nathan Wittstock <code@fardogllc.com>",
   "description": "Watch everything.",
@@ -14,7 +14,8 @@
 		"noble": "*",
 		"sensortag": "*",
 		"caf_piface": "*",
-		"faye": "*"
+		"faye": "1.0.x",
+		"twilio": "1.4.x"
   },
   "devDependencies": {
 		"grunt": "*",
