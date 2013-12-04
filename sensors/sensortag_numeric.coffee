@@ -26,9 +26,24 @@ module.exports =
   class Numeric
     numericValueChanged: (values) =>
       currentValue = values
+      @lastRead = new Date()
 
       if currentValue != @status
         @status = currentValue
+
+        # determine if this is an emergency or not, and set severity
+        # if this isn't severe, set severity to 0 so we still log it
+        message = ''
+        armedSeverity = disarmedSeverity = 0
+
+        for i in [0..values.length-1]
+          if message != '' then message += ', '
+          if values[i] > @config.numeric.threshold[i]
+            armedSeverity = @config.notification.armed
+            disarmedSeverity = @config.notification.disarmed
+            message += @config.numeric.warningMessages[i].replace("%d", Math.round(values[i]))
+          else
+            message += @config.numeric.messages[i].replace("%d", Math.round(values[i]))
 
         # build a message and send it
         message =
@@ -40,10 +55,10 @@ module.exports =
             name: @config.name
             friendly_Name: @config.friendlyName
             severity:
-              armed: @config.notification.armed
-              disarmed: @config.notification.disarmed
-            status: @status[1]
-            message: "Temperature: " + Math.round(@status[0]) + ", Humidity: " + Math.round(@status[1])
+              armed: armedSeverity
+              disarmed: disarmedSeverity
+            status: @status
+            message: message
 
         @com.send_message @config.channel, message
 
@@ -52,9 +67,24 @@ module.exports =
       @s.enable @config.sensor
 
     get_status: =>
+      # if we don't have a status, say so
       if !@status
-        return "Not Read"
-      Math.round(@status[1])
+        return "NA"
+
+      status = ''
+
+      # otherwise build a string of all required outputs
+      for output in @config.numeric.statusOutput
+        statusOutput = @config.numeric.statusOutput - 1
+
+        if status != '' then status += ','
+
+        if (@lastRead + 60*10*1000) < Date.now()
+          status += Math.round(@status[statusOutput]) + " (old)"
+        else
+          status += Math.round(@status[statusOutput])
+
+      return status
 
     constructor: (config, @com) ->
       @config = config
@@ -62,7 +92,8 @@ module.exports =
 
       @s = sensortag.SensorTag
       if process.env.DEBUG then console.log 'SensorTag Numeric: Waiting'
-      @status = undefined
+      @status = null
+      @lastRead = null
       if !@s.ready
         @s.on 'ready', @sensorTagReady
       else

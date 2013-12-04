@@ -31,7 +31,7 @@ class SensorTag extends events.EventEmitter
     @systemId = null
     @services = []
     @reader = null
-    @readInterval = 60000
+    @readInterval = 120000
     @discover()
 
   readSensors: =>
@@ -79,6 +79,7 @@ class SensorTag extends events.EventEmitter
           type: 'humidity'
           value: null
           emit: 'humidityChanged'
+        @readSensors()
 
 
   read: (service) =>
