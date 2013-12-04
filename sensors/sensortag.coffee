@@ -37,10 +37,36 @@ class SensorTag extends events.EventEmitter
   readSensors: =>
     if process.env.DEBUG then console.log 'SensorTag: Reading'
     for service in @services
-      if service.type == 'humidity'
-        @tag.readHumidity (p1, p2) =>
-          service.value = [p1, p2]
-          @emit 'humidityChanged', [p1, p2]
+      switch service.type
+        when 'humidity'
+          @tag.readHumidity (temperature, humidity) =>
+            service.value = [temperature, humidity]
+            @emit service.emit, service.value
+
+        when 'irTemperature'
+          @tag.readIrTemperature (objectTemperature, ambientTemperature) =>
+            service.value = [objectTemperature, ambientTemperature]
+            @emit service.emit, service.value
+
+        when 'barometricPressure'
+          @tag.readBarometricPressure (pressure) =>
+            service.value = [pressure]
+            @emit service.emit, service.value
+
+        when 'accelerometer'
+          @tag.readAccelerometer (x, y, z) =>
+            service.value = [x, y, z]
+            @emit service.emit, service.value
+
+        when 'magnetometer'
+          @tag.readMagnetometer (x, y, z) =>
+            service.value = [x, y, z]
+            @emit service.emit, service.value
+
+        when 'gyroscope'
+          @tag.readGyroscope (x, y, z) =>
+            service.value = [x, y, z]
+            @emit service.emit, service.value
 
   servicesDiscovered: =>
     if process.env.DEBUG then console.log 'SensorTag: Services Discovered'
@@ -72,14 +98,60 @@ class SensorTag extends events.EventEmitter
 
   enable: (sensorName) =>
     if process.env.DEBUG then console.log 'SensorTag: Enabling ' + sensorName
-    if sensorName == 'humidity'
-      @tag.enableHumidity =>
-        if process.env.DEBUG then console.log 'SensorTag: Humidity Enabled'
-        @services.push data =
-          type: 'humidity'
-          value: null
-          emit: 'humidityChanged'
-        @readSensors()
+    switch sensorName
+      when 'humidity'
+        @tag.enableHumidity =>
+          if process.env.DEBUG then console.log 'SensorTag: Humidity Enabled'
+          @services.push data =
+            type: 'humidity'
+            value: null
+            emit: 'humidityChanged'
+          @readSensors()
+
+      when 'irTemperature'
+        @tag.enableIrTemperature =>
+          if process.env.DEBUG then console.log 'SensorTag: IR Temperature Enabled'
+          @services.push data =
+            type: 'irTemperature'
+            value: null
+            emit: 'irTemperatureChanged'
+          @readSensors()
+
+      when 'barometricPressure'
+        @tag.enableBarometricPressure =>
+          if process.env.DEBUG then console.log 'SensorTag: Barometric Pressure Enabled'
+          @services.push data =
+            type: 'barometricPressure'
+            value: null
+            emit: 'barometricPressureChanged'
+          @readSensors()
+
+      when 'accelerometer'
+        @tag.enableAccelerometer =>
+          if process.env.DEBUG then console.log 'SensorTag: Accelerometer Enabled'
+          @services.push data =
+            type: 'accelerometer'
+            value: null
+            emit: 'accelerometerChanged'
+          @readSensors()
+
+      when 'magnetometer'
+        @tag.enableMagnetometer =>
+          if process.env.DEBUG then console.log 'SensorTag: Magnetometer Enabled'
+          @services.push data =
+            type: 'magnetometer'
+            value: null
+            emit: 'magnetometerChanged'
+          @readSensors()
+
+      when 'gyroscope'
+        @tag.enableGyroscope =>
+          if process.env.DEBUG then console.log 'SensorTag: Gyroscope Enabled'
+          @services.push data =
+            type: 'gyroscope'
+            value: null
+            emit: 'gyroscopeChanged'
+          @readSensors()
 
 
   read: (service) =>
