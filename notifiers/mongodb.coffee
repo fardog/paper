@@ -61,6 +61,12 @@ module.exports =
           console.log "MongoDB: Failed to get Collection"
           console.log err
         @collection = null
+        @db.close (err, result) =>
+          @db = null
+          if process.env.DEBUG then console.log "MongoDB: Closed connection after errors"
+          setTimeout (=>
+            MongoClient.connect @config.options.url, @connected
+          ), 60000
 
     messageReceived: (message) =>
       if process.env.DEBUG then console.log "MongoDB: called to notify"
@@ -91,6 +97,14 @@ module.exports =
           if err
             if process.env.DEBUG then console.log "MongoDB: Failed to log message."
             @unpostedMessages.push message
+            # close mongo connection and try again
+            @collection = null
+            @db.close (err, result) =>
+              if process.env.DEBUG then console.log "MongoDB: Closed connection after error posting"
+              @db = null
+              setTimeout (=>
+                MongoClient.connect @config.options.url, @connected
+              ), 60000
           else
             if process.env.DEBUG
               console.log "MongoDB: logged message"
