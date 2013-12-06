@@ -106,13 +106,16 @@ module.exports =
       status = if @armed then "Armed" else "Disarmed"
       if process.env.DEBUG then console.log "System is " + status
 
+      # make sure we're not dealing with an undefined "from" address
+      if message.data.from? then to = message.data.from else to = null
+
       message_to_publish =
         app: "paper"
         source_module: "coms/bayeux"
         message_type: "event"
         date: (new Date).toISOString()
         data:
-          to: message.data.from
+          to: to
           name: @config.name
           friendly_name: @config.friendlyName
           severity:
