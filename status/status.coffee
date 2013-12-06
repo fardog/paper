@@ -21,7 +21,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 module.exports =
   class Status
-    collect_status: (message) =>
+    collect_status: (requestMessage) =>
       status = {}
       status["armed"] = if @com.get_status() then "yes" else "no"
       for sensor in @sensors
@@ -32,7 +32,9 @@ module.exports =
         source_module: "status/status"
         message_type: "status"
         date: (new Date).toISOString()
-        data: status
+        data:
+          to: requestMessage.data.from
+          status: status
 
       @com.send_message '/control/global', message
 

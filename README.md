@@ -81,13 +81,14 @@ receiver. What `data` contains varies on the message type.
     date: <ISO8601_string>,
     channel: <pubsub_channel>,
     data: {
+        to: <uri> (Optional)
         name: <string>,
         friendly_name: <string>,
         severity: {
             armed: <integer>,
             disarmed: <integer>
         },
-        status: <string>,
+        status: <Object>,
         message: <string>
     }
 }
@@ -105,7 +106,7 @@ receiver. What `data` contains varies on the message type.
     data: {
         name: <string>,
         friendly_name: <string>,
-        from: <phone_number>,
+        from: <uri>,
         command: <command_string>
     }
 }
@@ -121,9 +122,12 @@ receiver. What `data` contains varies on the message type.
     date: <ISO8601_string>,
     channel: <pubsub_channel>,
     data: {
-        sensor_name1: <status>,
-        sensor_name2: <status>,
-        …
+        to: <uri>
+        status: {
+            sensor_name1: <status>,
+            sensor_name2: <status>,
+            …
+        }
     }
 }
 ```

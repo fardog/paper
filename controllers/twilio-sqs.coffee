@@ -34,7 +34,7 @@ module.exports =
         if process.env.DEBUG then console.log "TwilioSQS: Valid command."
         value =
           command: command
-          from: from
+          from: 'tel://' + encodeURIComponent(from)
         return value
       else
         return null
@@ -49,6 +49,10 @@ module.exports =
       if err?
         console.log "TwilioSQS: There was an error getting messages."
         console.log err
+        # wait 20 seconds before trying again
+        setTimeout (=>
+          @receiveMessage()
+        ), 20000
       else if data.Messages?
         for message in data.Messages
           if process.env.DEBUG then console.log "TwilioSQS: Got Message"
@@ -76,8 +80,13 @@ module.exports =
 
             @com.send_message @control_channel, message_output
 
-      # try to get the next message, if any
-      @receiveMessage()
+        # try to get the next message, if any
+        @receiveMessage()
+      else
+        # wait 20 seconds before trying again
+        setTimeout (=>
+          @receiveMessage()
+        ), 20000
 
     receiveMessage: =>
       parameters =

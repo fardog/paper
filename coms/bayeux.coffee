@@ -112,6 +112,7 @@ module.exports =
         message_type: "event"
         date: (new Date).toISOString()
         data:
+          to: message.data.from
           name: @config.name
           friendly_name: @config.friendlyName
           severity:

@@ -42,6 +42,10 @@ module.exports =
       else
         if process.env.DEBUG then console.log "MongoDB: Failed to connect to Service"
         @db = null
+        # if we failed, try again in 1 minute
+        setTimeout (=>
+          MongoClient.connect @config.options.url, @connected
+        ), 60000
 
     collectionCreated: (err, collection) =>
       if !err
