@@ -28,6 +28,9 @@ module.exports =
       command = command.replace ']', ''
       parts = command.split '['
       command = parts[0].trim().toLowerCase()
+      command_args = null
+      if command.length > 2
+        command_args = parts[1..parts.length-1]
       from = parts[parts.length-1].trim()
 
       if from in @config.options.authorizedSenders
@@ -35,6 +38,7 @@ module.exports =
         value =
           command: command
           from: 'tel://' + encodeURIComponent(from)
+          command_args: command_args
         return value
       else
         return null
@@ -77,6 +81,7 @@ module.exports =
                 friendly_name: @config.friendlyName
                 from: message_data.from
                 command: message_data.command
+                command_args: message_data.command_args
 
             @com.send_message @control_channel, message_output
 

@@ -25,70 +25,110 @@ url = require 'url'
 
 module.exports =
   class Twilio
-    send_message: (message, recipients) =>
+    sendMessage: (message, recipients, force) =>
       if process.env.DEBUG then console.log "Twilio: sending notification."
 
       # for each phone number in our recipient list, send a notification
       for phone_number in recipients
-        text_message =
-          body: "[paper] " + message.data.message
-          to: phone_number
-          from: @config.options.number
-
-        @twilio.sms.messages.create text_message, (err, sent_message) ->
-          if err?
-            console.log 'Twilio: Error sending alert message.'
-            console.log err
-          else
-            console.log 'Twilio: Message sent: ' + sent_message.sid
-
-
-    notify: (message) =>
-      if process.env.DEBUG then console.log "Twilio: called to notify."
-
-      # if it's an event, see if it's imporant enough to send
-      if message.message_type == 'event'
-        if process.env.DEBUG then console.log "Twilio: Got Event message"
-        # get severity of message if armed or disarmed
-        message_severity = message.data.severity.disarmed
-        alert_threshold = @config.notification.disarmed
-        if @com.armed
-          message_severity = message.data.severity.armed
-          alert_threshold = @config.notification.armed
-
-        # if the message isn't important enough, don't send
-        if message_severity < alert_threshold
-          return 0
-
-        # if we have a recipient list, we need to make sure it's intended for us
-        if message.data.to? and (url.parse message.data.to).protocol == 'tel:'
-          if process.env.DEBUG then console.log "Twilio: Got message to send to " + message.data.to
-          @send_message message, [decodeURIComponent((url.parse message.data.to).path)]
-        # otherwise, send the message, but only if the to wasn't defined
-        else if !(message.data.to?)
-          if process.env.DEBUG then console.log "Twilio: Got message to send to all"
-          @send_message message, @config.options.recipients
+        if phone_number in @silencedRecipients and !(force?)
+          if process.env.DEBUG then console.log "Twilio: ignoring silenced " + phone_number
         else
-          if process.env.DEBUG then console.log "Twilio: Got message but it wasn't intended for text"
+          text_message =
+            body: "[paper] " + message
+            to: phone_number
+            from: @config.options.number
+
+          @twilio.sms.messages.create text_message, (err, sent_message) ->
+            if err?
+              console.log 'Twilio: Error sending alert message.'
+              console.log err
+            else
+              console.log 'Twilio: Message sent: ' + sent_message.sid
 
 
+    processMessage: (message) =>
+      if process.env.DEBUG then console.log "Twilio: processing message."
+
+      switch message.message_type
+        when 'event'
+          if process.env.DEBUG then console.log "Twilio: Got Event message"
+          @processEvent message
+        when 'status'
+          if process.env.DEBUG then console.log "Twilio: Got Status message"
+          @processStatus message
+        when 'control'
+          if process.env.DEBUG then console.log "Twilio: Got control message"
+          @processControl message
+        else
+          if process.env.DEBUG then console.log "Twilio: No handler for message"
+
+    processEvent: (message) =>
+      # get severity of message if armed or disarmed
+      message_severity = message.data.severity.disarmed
+      alert_threshold = @config.notification.disarmed
+      if @com.armed
+        message_severity = message.data.severity.armed
+        alert_threshold = @config.notification.armed
+
+      # if the message isn't important enough, don't send
+      if message_severity < alert_threshold
+        return 0
+
+      # if we have a recipient list, we need to make sure it's intended for us
+      if message.data.to? and (url.parse message.data.to).protocol == 'tel:'
+        if process.env.DEBUG then console.log "Twilio: Got message to send to " + message.data.to
+        @sendMessage message.data.message, [decodeURIComponent((url.parse message.data.to).path)], true
+      # otherwise, send the message, but only if the "to" wasn't defined, don't 
+      # force since this wasn't implicitly intended for anyone
+      else if !(message.data.to?)
+        if process.env.DEBUG then console.log "Twilio: Got message to send to all"
+        @sendMessage message.data.message, @config.options.recipients
+      else
+        if process.env.DEBUG then console.log "Twilio: Got message but it wasn't intended for text"
+
+
+    processStatus: (message) =>
       # if it's a status message, send it no matter what, but only to the 
       # requesting person. if the requester isn't a telephone number, ignore
-      if message.message_type == 'status' and (url.parse message.data.to).protocol == 'tel:'
-        if process.env.DEBUG then console.log "Twilio: Got Status message"
+      if (url.parse message.data.to).protocol == 'tel:'
+        if process.env.DEBUG then console.log "Twilio: Processing Status message"
+        recipient = decodeURIComponent((url.parse message.data.to).path)
         status_string = ""
         for module_name, status of message.data.status
           status_string = status_string + module_name + ":" + status + " "
 
+        if recipient in @silencedRecipients
+          status_string += "SILENCED"
+
         message.data.message = status_string
-        @send_message message, [decodeURIComponent((url.parse message.data.to).path)]
+        @sendMessage message.data.message, [recipient], true
 
+    processControl: (message) =>
+      # if it's from a telephone number, it's intended for us
+      if (url.parse message.data.from).protocol == 'tel:'
+        if process.env.DEBUG then console.log "Twilio: Processing Control message"
+        switch message.data.command
+          when 'silence'
+            if process.env.DEBUG then console.log "Twilio: silence from " + message.data.from
+            @silenceRecipient decodeURIComponent((url.parse message.data.from).path)
 
+    silenceRecipient: (number) =>
+      if number in @silencedRecipients
+        index = @silencedRecipients.indexOf(number)
+        if index > -1
+          if process.env.DEBUG then console.log "Twilio: unsilencing number " + number
+          @silencedRecipients.splice(index, 1)
+          @sendMessage "Unsilenced", [number], true
+      else
+        if process.env.DEBUG then console.log "Twilio: silencing number " + number
+        @silencedRecipients.push(number)
+        @sendMessage "Silenced", [number], true
       
     constructor: (config, @com) ->
       @config = config
       @twilio = new twilio(config.options.accountSid, config.options.authToken)
+      @silencedRecipients = []
 
       @com.on 'message_received', (message) =>
-        @notify message
+        @processMessage message
 

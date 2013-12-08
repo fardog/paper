@@ -107,7 +107,8 @@ receiver. What `data` contains varies on the message type.
         name: <string>,
         friendly_name: <string>,
         from: <uri>,
-        command: <command_string>
+        command: <command_string>,
+        command_args: <array>
     }
 }
 ```
