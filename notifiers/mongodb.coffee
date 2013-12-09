@@ -20,12 +20,14 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ###
 
 
-MongoClient = require('mongodb').MongoClient
+MongoClient = (require 'mongodb').MongoClient
+Notifier = require '../base/notifier.coffee'
 
 module.exports =
-  class MongoDB
-    constructor: (config, @com) ->
-      @config = config
+  class MongoDB extends Notifier
+    constructor: (@config, @com) ->
+      @initNotifier(config, com)
+
       @db = null
       @collection = null
       @unpostedMessages = []
@@ -41,6 +43,7 @@ module.exports =
         @db.collection @config.options.collection, @collectionCreated
       else
         if process.env.DEBUG then console.log "MongoDB: Failed to connect to Service"
+        @error "error", "Failed to connect to Service", err
         @db = null
         # if we failed, try again in 1 minute
         setTimeout (=>
@@ -57,13 +60,13 @@ module.exports =
         @unpostedMessages = []
       # otherwise, there was an error
       else
-        if process.env.DEBUG
-          console.log "MongoDB: Failed to get Collection"
-          console.log err
+        if process.env.DEBUG then console.log "MongoDB: Failed to get Collection"
+        @error "error", "Failed to get Collection", err
         @collection = null
         @db.close (err, result) =>
           @db = null
           if process.env.DEBUG then console.log "MongoDB: Closed connection after errors"
+          if err then @error "error", "Failed to close connection to service", err
           setTimeout (=>
             MongoClient.connect @config.options.url, @connected
           ), 60000
@@ -87,6 +90,10 @@ module.exports =
         # otherwise, send the message
         @logMessage message
 
+      else if message.message_type == 'error'
+        # always log errors
+        @logMessage message
+
     logMessage: (message) =>
       if process.env.DEBUG
         console.log "MongoDB: Logging Message"
@@ -96,11 +103,13 @@ module.exports =
         @collection.insert message, {w: 1}, (err, result) ->
           if err
             if process.env.DEBUG then console.log "MongoDB: Failed to log message."
+            @error "error", "Failed to log message.", err
             @unpostedMessages.push message
             # close mongo connection and try again
             @collection = null
             @db.close (err, result) =>
               if process.env.DEBUG then console.log "MongoDB: Closed connection after error posting"
+              if err then @error "error", "Failed to close database connection", err
               @db = null
               setTimeout (=>
                 MongoClient.connect @config.options.url, @connected

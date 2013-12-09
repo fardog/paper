@@ -19,16 +19,18 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ###
 
+Notifier = require '../base/notifier'
 
 module.exports =
-  class Console
+  class Console extends Notifier
     message_received: (data) =>
-      console.log data
+      if data.message_type == "error"
+        console.error data
+      else
+        console.log data
 
-    constructor: (config, com) ->
-      @config = new Object
-      @config.armed = config.notification.armed
-      @config.disarmed = config.notification.disarmed
-      @config.full = config
-      com.on 'message_received', (data) =>
+    constructor: (@config, @com) ->
+      @initNotifier(config, com)
+
+      @com.on 'message_received', (data) =>
         @message_received data

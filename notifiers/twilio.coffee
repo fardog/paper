@@ -50,7 +50,7 @@ module.exports =
           @twilio.sms.messages.create text_message, (err, sent_message) ->
             if err?
               console.log 'Twilio: Error sending alert message.'
-              console.log err
+              @error "error", "Error sending message.", err
             else
               console.log 'Twilio: Message sent: ' + sent_message.sid
 
@@ -170,7 +170,7 @@ module.exports =
     # com - the coms object which is handling global communication
     #
     # returns nothing
-    constructor: (config, com) ->
+    constructor: (@config, @com) ->
       @initNotifier(config, com)
 
       @twilio = new twilio(config.options.accountSid, config.options.authToken)
