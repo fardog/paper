@@ -25,6 +25,14 @@ url = require 'url'
 
 module.exports =
   class Twilio
+    # sendMessage: dispatch a message via Twilio, so long as they aren't in the 
+    # "silenced" list
+    #
+    # message: <string> The message to be sent.
+    # recipients: [<string>] The recipients to receive the message
+    # force: <boolean> If true, send to the recipient even if they're silenced
+    #
+    # returns nothing
     sendMessage: (message, recipients, force) =>
       if process.env.DEBUG then console.log "Twilio: sending notification."
 
@@ -46,6 +54,12 @@ module.exports =
               console.log 'Twilio: Message sent: ' + sent_message.sid
 
 
+    # processMessage: processes an incoming Message Bundle from the coms
+    #
+    # message: <Object> the Message Bundle to be processed.
+    #
+    # returns nothing
+    # calls the message handler for each message type
     processMessage: (message) =>
       if process.env.DEBUG then console.log "Twilio: processing message."
 
@@ -62,6 +76,13 @@ module.exports =
         else
           if process.env.DEBUG then console.log "Twilio: No handler for message"
 
+    # processEvent: processes a Message Bundle with message_type of "event"
+    #
+    # message: <Object> the Message Bundle to be processed.
+    #
+    # returns 0 if the message isn't important enough, or isn't for us
+    # returns nothing otherwise
+    # calls @sendMessage for all other paths
     processEvent: (message) =>
       # get severity of message if armed or disarmed
       message_severity = message.data.severity.disarmed
@@ -85,8 +106,14 @@ module.exports =
         @sendMessage message.data.message, @config.options.recipients
       else
         if process.env.DEBUG then console.log "Twilio: Got message but it wasn't intended for text"
+        return 0
 
-
+    # processStatus: processes a Message Bundle with message_type of "status"
+    #
+    # message: <Object> the Message Bundle to be processed.
+    #
+    # returns nothing
+    # calls @sendMessage for all other paths
     processStatus: (message) =>
       # if it's a status message, send it no matter what, but only to the 
       # requesting person. if the requester isn't a telephone number, ignore
@@ -103,6 +130,12 @@ module.exports =
         message.data.message = status_string
         @sendMessage message.data.message, [recipient], true
 
+    # processControl: processes a Message Bundle with message_type of "control"
+    #
+    # message: <Object> the Message Bundle to be processed.
+    #
+    # returns nothing
+    # calls @silenceRecipient if we're silencing someone's alert number
     processControl: (message) =>
       # if it's from a telephone number, it's intended for us
       if (url.parse message.data.from).protocol == 'tel:'
@@ -112,6 +145,12 @@ module.exports =
             if process.env.DEBUG then console.log "Twilio: silence from " + message.data.from
             @silenceRecipient decodeURIComponent((url.parse message.data.from).path)
 
+    # silenceRecipient: add or remove a number from the silencedRecipients list
+    #
+    # number: number to be added if not already present in the list, and removed
+    # if already in the list
+    #
+    # returns nothing
     silenceRecipient: (number) =>
       if number in @silencedRecipients
         index = @silencedRecipients.indexOf(number)
@@ -123,7 +162,13 @@ module.exports =
         if process.env.DEBUG then console.log "Twilio: silencing number " + number
         @silencedRecipients.push(number)
         @sendMessage "Silenced", [number], true
-      
+
+    # constructor: instantiate the Twilio object
+    #
+    # config - the configuration subset relevant to this module
+    # com - the coms object which is handling global communication
+    #
+    # returns nothing
     constructor: (config, @com) ->
       @config = config
       @twilio = new twilio(config.options.accountSid, config.options.authToken)
