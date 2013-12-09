@@ -133,6 +133,30 @@ receiver. What `data` contains varies on the message type.
 }
 ```
 
+### Error
+
+```
+{
+    app: "paper",
+    source_module: <module_name>,
+    message_type: "error",
+    date: <ISO8601_string>,
+    channel: <pubsub_channel>,
+    data: {
+        message: <string>,
+        severity: <string>,
+        additional_data: <Object>
+    }
+}
+```
+
+In an error, severity must be one of the following:
+
+ - info
+ - warn
+ - error
+
+
 The MIT License (MIT)
 ---------------------
 

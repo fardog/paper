@@ -22,15 +22,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 twilio = require 'twilio'
 url = require 'url'
+Notifier = require '../base/notifier'
 
 module.exports =
-  class Twilio
+  class Twilio extends Notifier
     # sendMessage: dispatch a message via Twilio, so long as they aren't in the 
     # "silenced" list
     #
-    # message: <string> The message to be sent.
-    # recipients: [<string>] The recipients to receive the message
-    # force: <boolean> If true, send to the recipient even if they're silenced
+    # message - <string> The message to be sent.
+    # recipients - [<string>] The recipients to receive the message
+    # force - <boolean> If true, send to the recipient even if they're silenced
     #
     # returns nothing
     sendMessage: (message, recipients, force) =>
@@ -56,7 +57,7 @@ module.exports =
 
     # processMessage: processes an incoming Message Bundle from the coms
     #
-    # message: <Object> the Message Bundle to be processed.
+    # message - <Object> the Message Bundle to be processed.
     #
     # returns nothing
     # calls the message handler for each message type
@@ -78,7 +79,7 @@ module.exports =
 
     # processEvent: processes a Message Bundle with message_type of "event"
     #
-    # message: <Object> the Message Bundle to be processed.
+    # message - <Object> the Message Bundle to be processed.
     #
     # returns 0 if the message isn't important enough, or isn't for us
     # returns nothing otherwise
@@ -110,7 +111,7 @@ module.exports =
 
     # processStatus: processes a Message Bundle with message_type of "status"
     #
-    # message: <Object> the Message Bundle to be processed.
+    # message - <Object> the Message Bundle to be processed.
     #
     # returns nothing
     # calls @sendMessage for all other paths
@@ -132,7 +133,7 @@ module.exports =
 
     # processControl: processes a Message Bundle with message_type of "control"
     #
-    # message: <Object> the Message Bundle to be processed.
+    # message - <Object> the Message Bundle to be processed.
     #
     # returns nothing
     # calls @silenceRecipient if we're silencing someone's alert number
@@ -147,7 +148,7 @@ module.exports =
 
     # silenceRecipient: add or remove a number from the silencedRecipients list
     #
-    # number: number to be added if not already present in the list, and removed
+    # number - number to be added if not already present in the list, and removed
     # if already in the list
     #
     # returns nothing
@@ -169,8 +170,9 @@ module.exports =
     # com - the coms object which is handling global communication
     #
     # returns nothing
-    constructor: (config, @com) ->
-      @config = config
+    constructor: (config, com) ->
+      @initNotifier(config, com)
+
       @twilio = new twilio(config.options.accountSid, config.options.authToken)
       @silencedRecipients = []
 
