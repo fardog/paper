@@ -39,5 +39,5 @@ module.exports =
           message: message_string
           additional_data: additional_data
 
-      @coms.send_message @config.channel, message
+      @com.send_message @config.channel, message
 

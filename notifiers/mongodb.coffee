@@ -100,7 +100,7 @@ module.exports =
         console.log message
       if @collection
         if process.env.DEBUG then console.log "MongoDB: Collection exists, trying to insert."
-        @collection.insert message, {w: 1}, (err, result) ->
+        @collection.insert message, {w: 1}, (err, result) =>
           if err
             if process.env.DEBUG then console.log "MongoDB: Failed to log message."
             @error "error", "Failed to log message.", err
