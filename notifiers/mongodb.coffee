@@ -63,7 +63,7 @@ module.exports =
         if process.env.DEBUG then console.log "MongoDB: Failed to get Collection"
         @error "error", "Failed to get Collection", err
         @collection = null
-        @db.close (err, result) =>
+        if @db then @db.close (err, result) =>
           @db = null
           if process.env.DEBUG then console.log "MongoDB: Closed connection after errors"
           if err then @error "error", "Failed to close connection to service", err
@@ -107,7 +107,7 @@ module.exports =
             @unpostedMessages.push message
             # close mongo connection and try again
             @collection = null
-            @db.close (err, result) =>
+            if @db then @db.close (err, result) =>
               if process.env.DEBUG then console.log "MongoDB: Closed connection after error posting"
               if err then @error "error", "Failed to close database connection", err
               @db = null
